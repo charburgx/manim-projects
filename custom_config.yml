@@ -1,0 +1,7 @@
+style:
+  font: "CMU Serif"
+  background_color: "#181818"
+window_monitor: 2
+window_position: OO
+camera_qualities:
+  default_quality: "high"

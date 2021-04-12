@@ -322,14 +322,32 @@ class Cardiod(Scene):
         exit()
 
 from math import pow, sin, cos, log, sqrt
+from numpy.linalg import norm
 
 class PartialDerivatives(Scene):
     def construct(self):
         F1_COLOR = GREEN
         F2_COLOR = BLUE
+        POINT_RADIUS = 0.05
+        ARR_THICKNESS = 0.04
+        ARR_TIP_RATIO = 4
+        ARR_LENGTH_FAC = 0.5
+        SURFACE_ROT_TIME = 20
+        CURVE_TRACE_TIME = 10
 
         def f(x, y):
             return (sin(sqrt(pow(2*x, 2)+pow(2*y, 2))), pow(x/2, 2) - pow(y/2, 2))
+
+        def jacf(x, y):
+            return [
+                [ (2*x*cos(2*sqrt(pow(x, 2)+pow(y, 2))))/sqrt(pow(x, 2)+pow(y, 2)), (2*y*cos(2*sqrt(pow(x, 2)+pow(y, 2))))/sqrt(pow(x, 2)+pow(y, 2)) ],
+                [  x/2, -y/2 ]
+            ]
+
+        def tanVecsf(x, y):
+            d = jacf(x, y)
+            vecs = [ ( 1, 0, d[0][0] ), ( 0, 1, d[0][1] ), ( 1, 0, d[1][0] ), ( 0, 1, d[1][1] ) ]
+            return list(map(lambda v: np.array(v) * (1/norm(v)) * ARR_LENGTH_FAC, vecs))
 
         def func(u, v):
             return (( u, v, f(u, v)[0] ), (u, v, f(u, v)[1]))
@@ -337,13 +355,56 @@ class PartialDerivatives(Scene):
         def func1(u, v): return func(u, v)[0]
         def func2(u, v): return func(u, v)[1]
 
+        path = lambda t: ((1.4 + cos(3*t))*cos(t), (1.4 + cos(3*t))*sin(t))
+        t_val = ValueTracker(0)
+        t = lambda: t_val.get_value() 
+        self.add(t_val)
+
         ran = [-3, 3, 1]
 
-        axes1 = ThreeDAxes(x_range=ran, y_range=ran, z_range=ran)
-        surface1 = ParametricSurface(lambda u, v: axes1.c2p(*func1(u, v)), u_range = ran[:2], v_range = ran[:2], color=F1_COLOR)
-        graph1 = Group(axes1, surface1)
+        axeskw = { "x_range":ran, "y_range":ran, "z_range":ran }
+        surfacekw = { "u_range":ran[:2], "v_range":ran[:2] }
+        pointkw = { "radius":POINT_RADIUS }
+        veckw = { "thickness":ARR_THICKNESS," tip_width_ratio":ARR_TIP_RATIO }
+        vecxkw = { }
+        vecykw = { }
 
-        #graph1.rotate(PI/6, axis=LEFT)
+        # f1
+        axes1 = ThreeDAxes(**axeskw)
+        surface1 = ParametricSurface(lambda u, v: axes1.c2p(*func1(u, v)), **surfacekw, color=F1_COLOR)
+        
+        point1 = Sphere(color=F1_COLOR, **pointkw)
+        point1.add_updater(lambda m: m.shift(axes1.c2p(*func1(*path(t()))) - m.get_center()))
 
-        self.add(surface1, axes1, )
+        vec1x = Vector(**veckw, **vecxkw)
+        vec1x.add_updater(lambda m: m.set_points_by_ends(axes1.c2p(*func1(*path(t()))), axes1.c2p(*func1(*path(t()))) + axes1.c2p(*tanVecsf(*path(t()))[0])))
+        vec1y = Vector(**veckw, **vecykw)
+        vec1y.add_updater(lambda m: m.set_points_by_ends(axes1.c2p(*func1(*path(t()))), axes1.c2p(*func1(*path(t()))) + axes1.c2p(*tanVecsf(*path(t()))[1])))
+        
+        graph1 = Group(surface1,axes1,  vec1x, vec1y, point1,)
+        # f2
+        axes2 = ThreeDAxes(**axeskw)
+        surface2 = ParametricSurface(lambda u, v: axes2.c2p(*func2(u, v)), **surfacekw, color=F2_COLOR)
+        
+        point2 = Sphere(color=F2_COLOR, **pointkw)
+        point2.add_updater(lambda m: m.shift(axes2.c2p(*func2(*path(t()))) - m.get_center()))
 
+        vec2x = Vector(**veckw, **vecxkw)
+        vec2x.add_updater(lambda m: m.set_points_by_ends(axes2.c2p(*func2(*path(t()))), axes2.c2p(*func2(*path(t()))) + axes2.c2p(*tanVecsf(*path(t()))[2])))
+        vec2y = Vector(**veckw, **vecykw)
+        vec2y.add_updater(lambda m: m.set_points_by_ends(axes2.c2p(*func2(*path(t()))), axes2.c2p(*func2(*path(t()))) + axes2.c2p(*tanVecsf(*path(t()))[3])))
+        
+        graph2 = Group(surface2,axes2,  vec2x, vec2y, point2,)
+
+        self.add(graph2)
+
+        t_val.add_updater(lambda m, dt: m.increment_value(dt*2*PI*(1/CURVE_TRACE_TIME)))
+        self.wait(CURVE_TRACE_TIME)
+
+class Bruh(Scene):
+    def construct(self):
+        #Point
+        vec = Vector()
+        vec.set_points_by_ends(np.array((0, 0, 0)), np.array((0, 2, 0)))
+
+        self.add(vec)

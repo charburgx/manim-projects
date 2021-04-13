@@ -328,12 +328,16 @@ class PartialDerivatives(Scene):
     def construct(self):
         F1_COLOR = GREEN
         F2_COLOR = BLUE
+        X_COLOR = GREY_B
+        Y_COLOR = GREY_B
         POINT_RADIUS = 0.05
         ARR_THICKNESS = 0.04
         ARR_TIP_RATIO = 4
         ARR_LENGTH_FAC = 0.5
         SURFACE_ROT_TIME = 20
         CURVE_TRACE_TIME = 10
+        ANG_FORWARDS = PI/2 - PI/6
+        ANIM_TIME = SURFACE_ROT_TIME
 
         def f(x, y):
             return (sin(sqrt(pow(2*x, 2)+pow(2*y, 2))), pow(x/2, 2) - pow(y/2, 2))
@@ -360,6 +364,7 @@ class PartialDerivatives(Scene):
         t = lambda: t_val.get_value() 
         self.add(t_val)
 
+        # Surfaces
         ran = [-3, 3, 1]
 
         axeskw = { "x_range":ran, "y_range":ran, "z_range":ran }
@@ -369,7 +374,7 @@ class PartialDerivatives(Scene):
         vecxkw = { }
         vecykw = { }
 
-        # f1
+        ## f1
         axes1 = ThreeDAxes(**axeskw)
         surface1 = ParametricSurface(lambda u, v: axes1.c2p(*func1(u, v)), **surfacekw, color=F1_COLOR)
         
@@ -377,12 +382,12 @@ class PartialDerivatives(Scene):
         point1.add_updater(lambda m: m.shift(axes1.c2p(*func1(*path(t()))) - m.get_center()))
 
         vec1x = Vector(**veckw, **vecxkw)
-        vec1x.add_updater(lambda m: m.set_points_by_ends(axes1.c2p(*func1(*path(t()))), axes1.c2p(*func1(*path(t()))) + axes1.c2p(*tanVecsf(*path(t()))[0])))
+        vec1x.add_updater(lambda m: m.set_points_by_ends(axes1.c2p(*func1(*path(t()))), axes1.c2p(*(np.array(func1(*path(t()))) + tanVecsf(*path(t()))[0]))))
         vec1y = Vector(**veckw, **vecykw)
-        vec1y.add_updater(lambda m: m.set_points_by_ends(axes1.c2p(*func1(*path(t()))), axes1.c2p(*func1(*path(t()))) + axes1.c2p(*tanVecsf(*path(t()))[1])))
+        vec1y.add_updater(lambda m: m.set_points_by_ends(axes1.c2p(*func1(*path(t()))), axes1.c2p(*(np.array(func1(*path(t()))) + tanVecsf(*path(t()))[1]))))
         
         graph1 = Group(surface1,axes1,  vec1x, vec1y, point1,)
-        # f2
+        ## f2
         axes2 = ThreeDAxes(**axeskw)
         surface2 = ParametricSurface(lambda u, v: axes2.c2p(*func2(u, v)), **surfacekw, color=F2_COLOR)
         
@@ -390,21 +395,83 @@ class PartialDerivatives(Scene):
         point2.add_updater(lambda m: m.shift(axes2.c2p(*func2(*path(t()))) - m.get_center()))
 
         vec2x = Vector(**veckw, **vecxkw)
-        vec2x.add_updater(lambda m: m.set_points_by_ends(axes2.c2p(*func2(*path(t()))), axes2.c2p(*func2(*path(t()))) + axes2.c2p(*tanVecsf(*path(t()))[2])))
+        vec2x.add_updater(lambda m: m.set_points_by_ends(axes2.c2p(*func2(*path(t()))), axes2.c2p(*(np.array(func2(*path(t()))) + tanVecsf(*path(t()))[2]))))
         vec2y = Vector(**veckw, **vecykw)
-        vec2y.add_updater(lambda m: m.set_points_by_ends(axes2.c2p(*func2(*path(t()))), axes2.c2p(*func2(*path(t()))) + axes2.c2p(*tanVecsf(*path(t()))[3])))
+        vec2y.add_updater(lambda m: m.set_points_by_ends(axes2.c2p(*func2(*path(t()))), axes2.c2p(*(np.array(func2(*path(t()))) + tanVecsf(*path(t()))[3]))))
         
         graph2 = Group(surface2,axes2,  vec2x, vec2y, point2,)
 
-        self.add(graph2)
+        # Text
+        f1tex = "\\sin{{\\sqrt{{x^2 + y^2}}}}"
+        f2tex = "x^2 - y^2"
+        feq = Tex("f({{x}}, {{y}}) = ({}, {})".format(f1tex, f2tex), tex_to_color_map={ "{{x}}":X_COLOR, "{{y}}":Y_COLOR, f1tex:F1_COLOR, f2tex:F2_COLOR })
+
+        feq.to_corner(UL, 1)
+        feq.shift(RIGHT * 0.7)
+        self.add(feq)
+
+        f1label = Tex("f_1", color=F1_COLOR)
+        f2label = Tex("f_2", color=F2_COLOR)
+        self.add(f1label, f2label)
+
+        #"tex_to_color_map":{ "f_1":F1_COLOR, "f_2":F2_COLOR
+        jaclhs = Tex("\Delta_{f} = ")
+        jacmatrix = Matrix([
+            ["""{\\partial f_1} \\over {\\partial x}""", """{\\partial f_1} \\over {\\partial y}"""],
+            ["""{\\partial f_2} \\over {\\partial x}""", """{\\partial f_2} \\over {\\partial y}"""]
+        ], element_to_mobject_config={ "isolate":["f_1", "f_2"] } , v_buff=1.2)
+        jacfracs = [ ]
+        for i, ent in enumerate(jacmatrix.get_entries()):
+            ent[1].set_color({0:F1_COLOR, 1:F1_COLOR, 2:F2_COLOR, 3:F2_COLOR}[i])
+            jacfracs.append( (ent[1], ent[2][2]) )
+        jaceq = VGroup(jaclhs, jacmatrix)
+        jaceq.arrange(RIGHT)
+        jaceq.to_edge(RIGHT)
+        self.add(jaceq)
+
+        # Animation
+
+        RotateAxes(graph1, axes2, ANG_FORWARDS, LEFT)
+        RotateAxes(graph2, axes1, ANG_FORWARDS, LEFT)
+
+        rot_updater = lambda ax: (lambda m, dt: RotateAxes(m, ax, dt * 2*PI/SURFACE_ROT_TIME, OUT) )
+
+        graph1.add_updater(rot_updater(axes1))
+        graph2.add_updater(rot_updater(axes2))
+
+        graphs = Group(graph1, graph2)
+        for graph in graphs: graph.scale(0.5)
+        graphs.arrange(RIGHT * 6)
+
+        graphs.to_corner(DL, 1.5)
+        graphs.shift(UP * 0.5 + LEFT * 0.5)
+        f1label.next_to(graph1, DOWN*1.5)
+        f2label.next_to(graph2, DOWN*1.5)
+
+        self.add(graphs)
 
         t_val.add_updater(lambda m, dt: m.increment_value(dt*2*PI*(1/CURVE_TRACE_TIME)))
-        self.wait(CURVE_TRACE_TIME)
+
+        for i in range(0, 4):
+            time = ANIM_TIME/4
+            trans_time = 2
+            wait_time = time - trans_time
+            self.wait(wait_time)
+            animargs = { "replace_mobject_with_target_in_scene":True, "run_time":trans_time }
+            self.play(
+                FadeTransform(([f1label, f1label, f2label, f2label])[i].copy(), jacfracs[i][0], **animargs),
+                FadeTransform(([vec1x, vec1y, vec2x, vec2y])[i].copy(), jacfracs[i][1], **animargs)
+            )
+
+        #self.wait(CURVE_TRACE_TIME)
+        #exit()
 
 class Bruh(Scene):
     def construct(self):
         #Point
         vec = Vector()
-        vec.set_points_by_ends(np.array((0, 0, 0)), np.array((0, 2, 0)))
+        #vec.set_points_by_ends(np.array((0, 0, 0)), np.array((0, 2, 0)))
+
+        vec.rotate(PI)
 
         self.add(vec)

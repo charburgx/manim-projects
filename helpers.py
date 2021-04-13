@@ -30,3 +30,5 @@ def ColorInt(col, colorto):
 def transformed(transforms):
     return list(map(lambda anim: anim.mobject, transforms))
 
+def RotateAxes(obj, axes, angle, to, abt_point=np.array((0, 0, 0)), **kwargs):
+    obj.rotate(angle, axes.c2p(*to) - axes.c2p(*abt_point), about_point=axes.c2p(*abt_point), **kwargs)

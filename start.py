@@ -22,7 +22,7 @@ class MoreGeneralSystem(Scene):
         self.play(LaggedStartMap(FadeIn, equations, shift=UP, lag_ratio=0.5, run_time=3))
         self.wait()
 
-class Test2(Scene):
+class Tensor(Scene):
     def construct(self):
         self.camera.frame.shift(2 * OUT)
 
@@ -324,7 +324,7 @@ class Cardiod(Scene):
 from math import pow, sin, cos, log, sqrt
 from numpy.linalg import norm
 
-class PartialDerivatives(Scene):
+class Partial(Scene):
     def construct(self):
         F1_COLOR = GREEN
         F2_COLOR = BLUE

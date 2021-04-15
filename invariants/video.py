@@ -1,2 +1,319 @@
 from friends import *
+from manimlib import AnimationGroup as AG
 
+FADE_BUFF = MED_LARGE_BUFF
+YELLOW_F = "#F7F642"
+GRAD_A = (YELLOW_B, PINK)
+
+def src(item):
+    return "invariants/assets/" + item
+
+def f12():
+    return Tex("f12", tex_to_color_map={"12":YELLOW_F}, font_size=160)
+
+class MathCompetitions(Scene):
+    def construct(self):
+        math_comps = Text("Math Competitions")
+        math_comps_ul = Underline(math_comps)
+        title = VGroup(math_comps, math_comps_ul)
+        
+        self.play(
+            AG(
+                Write(math_comps, run_time=1.5),
+                GrowFromEdge(math_comps_ul, LEFT, rate_func=smooth, run_time=1),
+                lag_ratio=0.4
+            )
+        )
+
+        conf_amc = {"font_size":55}
+        maa_color = "#3256A4"
+
+        maa_logo = ImageMobject("invariants/assets/maa_bg.png", height=2)
+        american = Text("American", **conf_amc)
+        math = Text("Math", **conf_amc)
+        competition = Text("Competition", **conf_amc)
+
+        amc = Group(maa_logo, american, math, competition)
+        for obj in amc: obj.next_to(ORIGIN)
+        amc.arrange(DOWN, aligned_edge=LEFT, buff=MED_LARGE_BUFF)
+        amc.shift(DOWN * MED_SMALL_BUFF)
+
+        VGroup(american[0], math[0], competition[0]).set_color(maa_color)
+
+        self.play(
+            AG(
+                title.animate.to_edge(UP),
+                #Write(amc),
+                #*(FadeIn(m, UP) for m in amc),
+                AG( *(FadeIn(m, UP*FADE_BUFF) for m in amc), lag_ratio=0.1 ),
+                lag_ratio=0.4
+            )
+        )
+
+        cen_buff = 3
+
+        conf_facts = { "font_size":40, "t2c": { "75": maa_color, "25": maa_color } }
+        facts = VGroup(Text("‣ 75 minutes", **conf_facts), Text("‣ 25 problems", **conf_facts))
+        facts.arrange(DOWN, aligned_edge=LEFT, buff=0.3)
+        facts.shift(RIGHT * cen_buff)
+
+        self.play(
+            AG(
+                AG(
+                    *(m.animate.shift(LEFT * cen_buff) for m in amc),
+                    lag_ratio=0.05
+                ),
+                Write(facts),
+                lag_ratio = 0.5
+            )
+        )
+        
+        self.wait()
+
+        self.play(
+            FadeOut(title, UP),
+            FadeOut(amc, DL),
+            FadeOut(facts, DR)
+        )
+
+class CompFlow(Scene):
+    def construct(self):
+        t_conf = { "font_size":30 }
+
+        amc = Text("AMC", **t_conf)
+        aime = Text("AIME", **t_conf)
+        usamo = Text("USAMO", **t_conf)
+        imo = Text("IMO", **t_conf)
+
+        comps = VGroup(amc, aime, usamo, imo)
+        comps.arrange(RIGHT, buff=2)
+
+        arrs = [ Arrow(a.get_corner(RIGHT), b.get_corner(LEFT), thickness=0.04) for a, b in [(amc, aime), (aime, usamo), (usamo, imo)] ]
+
+        comps.add(*arrs)
+
+        imo_pic = ImageMobject("invariants/assets/imo2015.jpg", height=2)
+        imo_pic.next_to(imo, UP, buff=0.5, aligned_edge=DOWN*0.5)
+
+        conf_approx = { "font_size":48, "color":GREY_B, "font": "Fira Code", "weight":"LIGHT" }
+        
+        app_label = Text("approx no. of\n\nU.S. entrants:", **conf_approx)
+        amc_label = Text("~300,000", **conf_approx)
+        aime_label = Text("~5,000", **conf_approx)
+        usamo_label = Text("~500", **conf_approx)
+        imo_label = Text("6", **conf_approx)
+
+        labels = [app_label, amc_label, aime_label, usamo_label, imo_label]
+        for label in labels: label.scale(0.2)
+
+        #app_label.next_to(amc, DL, aligned_edge=UR)
+        #app_label.shift(LEFT*0.35)
+
+        amc_label.next_to(amc, DOWN)
+        aime_label.next_to(aime, DOWN)
+        usamo_label.next_to(usamo, DOWN)
+        imo_label.next_to(imo, DOWN)
+
+        app_label.next_to(amc_label, LEFT, buff=0.5)
+
+        def arr_anim(i, b, c, grow_kwargs={}, **kwargs):
+            return AG( 
+                GrowFromEdge(arrs[i], LEFT, **grow_kwargs), 
+                AG( Write(b), FadeIn(c), lag_ratio=0.5),
+                lag_ratio=0.1,
+                **kwargs
+            )
+        
+        self.play(
+            FadeIn(app_label),
+            AG( Write(amc), FadeIn(amc_label), lag_ratio=0.8 )
+        )
+        self.wait()
+
+        self.play(arr_anim(0, aime, aime_label))
+        self.wait()
+
+        self.play(arr_anim(1, usamo, usamo_label))
+        self.wait()
+
+        self.play( 
+            arr_anim(2, imo, imo_label),
+            FadeIn(imo_pic, DOWN)
+        )
+
+        """self.play(
+            AG( *(FadeIn(label) for label in labels), lag_ratio=0.1 )
+        )"""
+
+class AnotherWay(Scene):
+    def construct(self):
+        cor_buff = 2
+        conf_t = { "font_size": 55, "t2c":{ "3": YELLOW, "15": YELLOW } }
+
+        months = Text("3 months", **conf_t)
+        problems = Text("15 problems", **conf_t)
+        home = Text("\uf015", font_size=90, font="Font Awesome 5 Free")
+        
+        home.set_height(home.get_width()*0.85, stretch=True)
+        home.scale(1.5)
+
+        r = 3
+        pos = lambda n: np.array(( r*cos(2*PI/3 * n + PI/6), r*sin(2*PI/3 * n + PI/6), 0 ))
+
+        months.move_to(pos(0))
+        problems.move_to(pos(1))
+        home.move_to(pos(2), DOWN)
+        
+        home.shift(0.5*UP)
+        months.shift(0.25*RIGHT)
+
+        alen = 1.5
+
+        self.play(Write(problems, run_time=alen))
+        self.wait(0.5)
+        self.play(Write(months, run_time=alen))
+        self.wait(0.5)
+        self.play(Write(home, run_time=alen))
+        #self.add(months, problems, home)
+
+class Proof(Scene):
+    def construct(self):
+        #conf_t = { "font_size":70 }
+
+        catch = Text("The catch?", font_size=70)
+        proof = Text("Proof.", gradient=GRAD_A, font_size=90)
+
+        content = VGroup(catch, proof)
+        content.arrange(DOWN)
+
+        catch_to_pos = catch.get_center().copy()
+
+        catch.center()
+
+        self.add(catch)
+        self.wait()
+
+        self.play(
+            AG(
+                AG(catch.animate.move_to(catch_to_pos), run_time=0.65),
+                Write(proof),
+                lag_ratio=0.5
+            )
+        )
+
+        #self.add(content)
+
+class Intro(Scene):
+    def construct(self):
+        axes = Axes(x_range=np.array([-4.0, 4.0, 1.0]), y_range=np.array([-4.0, 4.0, 1.0]), height=6, width=6)
+
+        nx = 10
+        ny = 5
+
+        #startsx = [Dot(np.array((i, 0, 0))) for i in range(0, nx)]
+        #startsy = [Dot(np.array((0, i, 0))) for i in range(0, ny)]
+        #endsx   = [Dot(np.array((i, 0, 0))) for i in range(0, nx)]
+        #endsy   = [Dot(np.array((0, i, 0))) for i in range(0, ny)]
+
+        #startsx = Group(*[ValueTracker(0) for i in range(0, nx)])
+        #endsx   = Group(*[ValueTracker(0) for i in range(0, nx)])
+        #startsy = [ValueTracker(0) for i in range(0, ny)]
+        #endsy   = [ValueTracker(0) for i in range(0, ny)]
+        #self.add(*startsx, *endsx, *startsy, *endsy)
+
+        #conf_dl = { }
+
+        #linex = lambda i: always_redraw(lambda: DashedLine(axes.c2p(i, startsx[i].get_value(), 0), axes.c2p(i, endsx[i].get_value(), 0), **conf_dl))
+        #liney = lambda i: always_redraw(lambda: DashedLine(axes.c2p(i, startsy[i].get_value(), 0), axes.c2p(i, endsy[i].get_value(), 0), **conf_dl))
+
+        #linesx = [linex(i) for i in range(0, nx)]
+        #linesy = [liney(i) for i in range(0, ny)]
+
+       # tracker = ValueTracker(0)
+        #self.add(tracker)
+
+        #dl = always_redraw(lambda: DashedLine(axes.c2p(0, 0, 0), axes.c2p(0, tracker.get_value(), 0), **conf_dl))
+        #self.add(axes, dl)
+        #self.add( axes, *linesx)
+
+        #tracker.increment_value(1)
+        #tracker.add_updater(lambda m, dt: m.increment_value(dt))
+        #self.wait()
+
+        #self.play(tracker.animate.move_to(np.array((0, 3, 0))))
+
+        #endsx[0].increment_value(1)
+
+        f12 = f12()
+
+        self.play(
+            Write(f12, rate_func=double_smooth, run_time=4)
+        )
+
+        self.play(
+            FadeOut(f12, run_time=1)
+            #Write(f12, rate_func=(lambda t: smooth(1-t)))
+        )
+
+        #self.add(f12)
+
+class USAMTS(Scene):
+    def construct(self):
+        aopsin = ImageMobject(src("aopsinitiative_bg.png"), height=1.75)
+        aops   = ImageMobject(src("aops_logo_bg.png"), height=1)
+        wolfram = ImageMobject(src("wolfram_bg"), height=1)
+        nsa = ImageMobject(src("nsa_bg.png"), height=2)
+
+        usamts = Text("USAMTS", font_size=50, t2c={"USA":RED})
+        usamts.to_edge(LEFT, buff=1)
+
+        rhs = Group(aops, wolfram, nsa)
+        rhs.arrange(DOWN, buff=LARGE_BUFF)
+        rhs.to_edge(RIGHT, buff=1)
+
+        conf_arr = { "thickness":0.04 }
+
+        rhs_arrs = VGroup(*( Arrow(m.get_corner(LEFT), aopsin.get_corner(RIGHT), **conf_arr) for m in [aops, wolfram, nsa] ))
+        lhs_arr = Arrow(aopsin.get_corner(LEFT), usamts.get_corner(RIGHT), **conf_arr)
+
+        an_fade = lambda obj, **kwargs: FadeIn(obj, UP*FADE_BUFF/2, run_time=0.7, **kwargs)
+        an_arr = lambda obj, i, **kwargs: AG( an_fade(obj, **kwargs), GrowArrow(rhs_arrs[i]), lag_ratio=0.3 )
+
+        self.play( an_fade(aopsin) )
+        self.wait(0.5)
+        self.play( an_arr(aops, 0) )
+        self.play( an_arr(wolfram, 1) )
+        self.play( an_arr(nsa, 2) )
+        self.wait(0.5)
+        self.play(AG(
+            GrowArrow(lhs_arr, run_time=0.5),
+            Write(usamts, run_time=1.5),
+            lag_ratio=0.3
+        ))
+        self.wait(1)
+        
+
+
+
+        #self.add(aopsin, rhs, rhs_arrs, lhs_arr, usamts)
+
+
+class Test(Scene):
+    def construct(self):
+        axes = Axes()
+
+        dot = Dot(np.array((0, 0, 0)))
+        dot2 = Dot(np.array((0, 1, 0)))
+
+        dl = always_redraw(lambda: DashedLine(axes.c2p(*dot.get_center()), axes.c2p(*dot2.get_center())))
+
+        self.add(axes, dot, dot2, dl)
+
+        
+        self.play(dot.animate.move_to(np.array((1, 0, 0))))
+
+        #conf_approx = { "font_size":48, "color":GREY_B, "font": "Fira Code", "weight":"LIGHT" }
+        #app_label = Text("""approx no. of\n\nU.S. entrants""", width=10, **conf_approx)
+        #app_label.set_width(1)
+
+        #self.add(app_label)

@@ -3,12 +3,13 @@ from manimlib import AnimationGroup as AG
 
 FADE_BUFF = MED_LARGE_BUFF
 YELLOW_F = "#F7F642"
+BOX_C = YELLOW_F
 GRAD_A = (YELLOW_B, PINK)
 
 def src(item):
     return "invariants/assets/" + item
 
-def f12():
+def gen_f12():
     return Tex("f12", tex_to_color_map={"12":YELLOW_F}, font_size=160)
 
 class MathCompetitions(Scene):
@@ -244,7 +245,7 @@ class Intro(Scene):
 
         #endsx[0].increment_value(1)
 
-        f12 = f12()
+        f12 = gen_f12()
 
         self.play(
             Write(f12, rate_func=double_smooth, run_time=4)
@@ -292,11 +293,187 @@ class USAMTS(Scene):
         ))
         self.wait(1)
         
+        #self.play(Write(usamts))
 
+        self.play(usamts.animate.to_corner(UP),  FadeOut(Group(rhs, rhs_arrs, lhs_arr, aopsin)))
 
+        usamts_ul = Underline(usamts)
+        g_usamts = VGroup(usamts, usamts_ul)
+        self.play(ShowCreation(usamts_ul))
+
+        usr = Group(*[ImageMobject(src("usamts_r{}.png".format(i)), height=4) for i in [1, 2, 3]])
+        usr.arrange(RIGHT, buff=LARGE_BUFF)
+        usr.shift(DOWN)
+
+        self.play(AG(
+            *(FadeIn(m, UP, run_time=1.5) for m in usr),
+            lag_ratio=0.2
+        ))
+
+        self.wait(1)
+
+        self.play(AG(
+            *(FadeOut(m, UP, run_time=1) for m in usr),
+            lag_ratio=0.2
+        ))
+
+        #usp_easy = ImageMobject(src("usamts_peasy.png"), height=2)
+        #usp_hard = ImageMobject(src("usamts_phard.png"), height=0.7)
+
+        conf_tex = {"font_size":20}
+        usp_easy = TexText("\\textbf{1/1/31.  } Partition  the grid into 1 by 1 squares and 1 by 2\n\ndominoes in either orientation, marking dominoes with a\n\nline connecting the two adjacent squares, and 1 by 1 squares\n\nwith an asterisk ($\\ast$). No two 1 by 1 squares can share a side.\n\nA \\textit{border} is a grid segment between two adjacent squares\n\nthat contains dominoes of opposite orientations $\\ldots$", **conf_tex)
+        usp_hard = TexText("\\textbf{5/1/31.  } Let $n$ be a positive integer. For integers $a, b$ with $0 \\leq a, b \\leq n-1$, let $r_n(a, b)$ denote the remainder when $ab$ is divided by $n$. If $S_n$ denotes the sum of all $n^2$ remainders $r_n(a, b)$ prove that $$\\frac{1}{2} - \\frac{1}{\\sqrt{n}} \\leq \\frac{S_n}{n^3} \\leq \\frac{1}{2}$$", **conf_tex)
+
+        usp = Group(usp_easy, usp_hard)
+        usp.arrange(RIGHT, buff=LARGE_BUFF)
+
+        self.play(AG(
+            *(FadeIn(m, UP, run_time=1.5) for m in usp),
+            lag_ratio=0.7
+        ))
+
+        self.wait(2)
+
+        self.play(AG(
+            *(FadeOut(m, UP, run_time=1) for m in usp),
+            lag_ratio=0.7
+        ))
+
+        f12 = gen_f12()
+        center_buff = 3
+        f12.shift(LEFT * center_buff)
+
+        self.play(Write(f12))
 
         #self.add(aopsin, rhs, rhs_arrs, lhs_arr, usamts)
 
+class ProblemStatement(Scene):
+    def construct(self):
+        conf_f = { "font_size":23 }
+
+        YELLOW
+        line1 = Text("4/1/31.   A group of 100 friends stands in a circle. Initially, one person has 2019 mangos,\n\n\tand no one else has mangos. The friends split the mangos according to the following rules:", t2w={"4/1/31.":"BOLD"}, **conf_f)
+        line2 = Text("\t\t• sharing:  to share, a friend passes two mangos to the left and one mango to the right.", t2s={"sharing":ITALIC}, **conf_f)
+        line3 = Text("\t\t• eating:  the mangos must also be eaten and enjoyed.  However, no friend wants to be\n\n\t\tselfish and eat too many mangos.  Every time a person eats a mango, they must also\n\n\t\tpass another mango to the right.", t2s={"eating":ITALIC, **conf_f}, **conf_f)
+        line4 = Text("\t\tA person may only share if they have at least three mangos, and they may only eat if they\n\n\thave at least two mangos.  The friends continue sharing and eating, until so many mangos\n\n\thave been eaten that no one is able to share or eat anymore.\n\n\t\tShow that there are exactly eight people stuck with mangos, which can no longer be\n\n\tshared or eaten.", **conf_f)
+
+        text = VGroup(line1, line2, line3, line4)
+        text.arrange(DOWN, buff=0.5)
+
+        regs = [ line1[12:52], line1[79:91], line2[3:12], line2[40:90], line3[3:11], line3[145:158], line3[174:207], line4[250:] ]
+        
+        regs_obj = [ VGroup(*m) for m in regs ]
+        conf_style = { "color":BOX_C }
+
+        ul_friends = Underline(regs_obj[0], **conf_style)
+        box_sharing = SurroundingRectangle(regs_obj[2], **conf_style)
+        box_eating = SurroundingRectangle(regs_obj[4], **conf_style)
+        ul_sharing_desc = Underline(regs_obj[3], **conf_style)
+        ul_eating_desc1 = Underline(regs_obj[5], **conf_style)
+        ul_eating_desc2 = Underline(regs_obj[6], **conf_style)
+        box_2019 = SurroundingRectangle(regs_obj[1], **conf_style)
+        box_show = SurroundingRectangle(regs_obj[7], **conf_style)
+
+        ul_eating_desc2.set_width(4.5, about_edge=LEFT)
+
+        anim = lambda obj, **kwargs: ShowCreationThenDestruction(obj, **kwargs)
+        wait = lambda: self.wait(0.5)
+
+        self.play(Write(text))
+        wait()
+
+        self.play( anim(ul_friends))
+        wait()
+        self.play( anim(box_sharing) )
+        self.play( anim(box_eating) )
+        wait()
+        self.play( anim(ul_sharing_desc) )
+        wait()
+        self.play( AG(anim(ul_eating_desc1), anim(ul_eating_desc2), lag_ratio=0.2) )
+        wait()
+        self.play( anim(box_2019) )
+        wait()
+        self.play( anim(box_show) )
+
+        #self.play( FadeOut(VGroup(*line1[12:45])) )
+
+        #self.embed()
+
+        #self.play(*(Write(line) for line in text))
+        #self.add(text)
+
+class SmallExample(Scene):
+    def construct(self):
+        circ = FriendCircle(3, [5, 0, 0], friend_size=5, radius=1.6)
+        circ.gen_rand_state()
+        self.add(circ)
+
+        t_val = ValueTracker(0)
+        t = lambda: t_val.get_value()
+        self.add(t_val)
+
+        circ.add_updater(lambda m: m.anim_states(t()))
+
+        self.wait(1)
+
+        rate = 1/2
+        t_val.add_updater(lambda m, dt: m.increment_value(dt*rate))
+        self.wait( circ.nstates()/rate )
+
+        self.wait(1)
+
+        self.play(
+            *(ShowCreationThenFadeOut(SurroundingRectangle(m, color=BOX_C), run_time=1.5) for m in circ.counters),
+        )
+
+        self.embed()
+
+class MedExample(Scene):
+    def construct(self):
+        circ = FriendCircle(5, [7, 0, 0, 0, 0], friend_size=5, radius=2)
+        circ.gen_rand_state()
+        self.add(circ)
+
+        t_val = ValueTracker(0)
+        t = lambda: t_val.get_value()
+        self.add(t_val)
+
+        circ.add_updater(lambda m: m.anim_states(t()))
+
+        self.wait(1)
+
+        rate = 0.7
+        t_val.add_updater(lambda m, dt: m.increment_value(dt*rate))
+        self.wait( circ.nstates()/rate )
+
+class BeautifulMathAhead(Scene):
+    def construct(self):
+        sign_color = "#FA6405"
+
+        exterior = Square(3.1, stroke_width=0, fill_color=sign_color, fill_opacity=1)
+        interior = Square(2.9, stroke_width=5, stroke_color=BLACK)
+        body = VGroup(exterior, interior)
+        body.rotate(PI/4)
+        body.scale(1.5)
+
+        conf_text = {"font":"Roadgeek 2014 Series D", "font_size":55, "color":BLACK}
+        text = VGroup(*( Text(s, **conf_text) for s in ["BEAUTIFUL", "MATH", "AHEAD"] ))
+
+        text.arrange(DOWN, buff=0.6)
+        text.shift(DOWN*0.15)
+
+        self.play(AG(
+            Write(exterior, stroke_color=sign_color, run_time=2, rate_func=double_smooth),
+            AG(
+                Write(interior, stroke_color=BLACK, rate_func=smooth, run_time=2),
+                Write(text, stroke_color=BLACK, rate_func=smooth, run_time=2.5),
+                lag_ratio=0.001
+            ),
+            lag_ratio=0.5
+        ))
+        #self.add(body, text)
+
+class 
 
 class Test(Scene):
     def construct(self):

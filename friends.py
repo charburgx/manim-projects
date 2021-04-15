@@ -143,7 +143,7 @@ class FriendCircle(VGroup):
         "text_size": 30,
         "radius": 2,
         "buff": 0.4,
-        "p_eat": 0.7
+        "p_eat": 0.5
     }
 
     def __init__(self, n, init_state, **kwargs):
@@ -225,6 +225,13 @@ class FriendCircle(VGroup):
         j = min(floor(t), len(self.states)-2)
         p = min(t - j, 1)
 
+        if t >= len(self.states)-1:
+            for f in self.get_friends():
+                f.reset_position()
+            for i, c in enumerate(self.counters):
+                c.set_value(self.states[-1][0][i])
+            return
+
         int_c_down = PiecewiseInterpolate([{"time":1, "start": 0, "end": 1}, 
                                            {"time":2, "start": 1, "end": 1}], smooth)
 
@@ -264,8 +271,11 @@ class FriendCircle(VGroup):
         for i in range(0, self.n):
             ang = (2*PI / self.n) * i
             vec = np.array(( cos(ang + PI/2), sin(ang + PI/2), 0 ))
-            r.append( [ (self.radius + self.buff) * vec, (self.radius - self.buff) * vec, vec ] )
+            r.append( [ (self.radius + (self.buff * (self.friend_size/3.5) )) * vec, (self.radius - self.buff) * vec, vec ] )
         return r
+
+    def nstates(self):
+        return len(self.states) - 1
 
     def add_state(self, state):
         self.states.append(state)

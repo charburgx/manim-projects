@@ -1,3 +1,5 @@
+""" Class for animation of people sitting at a circle table (see invariants/video.py) """
+
 from manimlib import *
 from itertools import product
 from math import cos, sin, floor
@@ -7,6 +9,9 @@ BG_COLOR = "#181818"
 MANGO_COLOR = GOLD_D
 
 class PiecewiseInterpolate(object):
+    """
+    Class which gives a "keyframe" approach to animations
+    """
     def __init__(self, stages, interp=lambda t: t):
         self.stages = stages
         self.interp = interp
@@ -44,6 +49,9 @@ class PiecewiseInterpolate(object):
 
 
 class Friend(VGroup):
+    """
+    A friend who sits at the table, consisting of a body, two arms, and 1-2 mangos
+    """
     CONFIG = {
         "background_color": BG_COLOR,
         "mango_color": MANGO_COLOR,
@@ -69,15 +77,18 @@ class Friend(VGroup):
         VGroup(self.axes, self.mango1, self.mango2).set_opacity(0)
         self.reset_position()
 
-    # animations
+    ### Animations ###
 
     INTERP_FUNC = smooth
+
+    # poses are of the form (body, (arm1, arm2), ((mango1, mango2)))
     IDLE_POS = ((0, 0, 0), ((1.3, -0.72, 0), (-1.3, -0.72, 0)), ((1.6, -1.4, 0), (-1.6, -1.4, 0)))
     SHARE_POS = ((0, 0, 0), ((2, -0.31, 0), (-2, -0.31, 0)), ((2.6, -0.31, 0), (-2.6, -0.31, 0)))
     EAT_POS = ((0, 0, 0),  ((0.6, -0.25, 0), SHARE_POS[1][1]), ( (0.1, 0, 0), SHARE_POS[2][1] ) )
 
     def reset_position(self):
         self.move(*self.IDLE_POS)
+        for m in self.get_mangos(): m.set_opacity(0)
 
     def anim_share(self, t):
         self.anim_mango(t, self.SHARE_POS)
@@ -85,6 +96,7 @@ class Friend(VGroup):
     def anim_eat(self, t):
         self.anim_mango(t, self.EAT_POS, rhangle=0)
 
+    # animates body position to pos_to
     def anim_mango(self, t, pos_to, rhangle=PI/4, lhangle=-PI/4, pos_from=IDLE_POS):
         pos = ((0, 0, 0), [(0, 0, 0), (0, 0, 0)], [(0, 0, 0), (0, 0, 0)] )
 
@@ -136,6 +148,11 @@ EAT = 0
 SHARE = 1
 
 class FriendCircle(VGroup):
+    """
+    A table with n friends around it
+
+    Based on problem 4 from https://usamts.org/Tests/Problems_31_1.pdf
+    """
     CONFIG = {
         "circle_sw":  2,
         "sw": 2,
@@ -157,14 +174,14 @@ class FriendCircle(VGroup):
         #self.ax = Axes()
         #self.ax.scale(1.31)
         #self.ax.set_opacity(0)
-        self.friends = VGroup()
-        self.counters = VGroup()
+        self.friends = [ ]
+        self.counters = [ ]
 
         for i in range(0, n):
             ap = self.get_anchor_points()[i]
 
             f = Friend(stroke_width=self.sw)
-            self.friends.add(f)
+            self.friends.append(f)
             f.set_width(self.friend_size)
             ang = (2*PI / n) * i
             f.rotate(ang)
@@ -174,10 +191,11 @@ class FriendCircle(VGroup):
             #counter.scale(self.text_size)
             counter.move_to(ap[1])
             counter.shift(0.04 * (self.text_size/30) * DOWN)
-            self.counters.add(counter)
+            self.counters.append(counter)
 
-        self.add(self.circle, self.friends, self.counters)
+        self.add(self.circle, *self.friends, *self.counters)
         
+    # generates a random progression of table states according to rules from USAMTS31 R1P4
     def gen_rand_state(self):
         self.clear_states()
 
@@ -206,12 +224,14 @@ class FriendCircle(VGroup):
 
         self.add_state([curr_state])
 
+    # person i eats
     def eat(self, i, state):
         new_state = state.copy()
         new_state[i % self.n] -= 2
         new_state[(i + 1) % self.n] += 1
         return new_state
 
+    # person i shares
     def share(self, i, state):
         new_state = state.copy()
         new_state[i % self.n] -= 3
@@ -219,6 +239,10 @@ class FriendCircle(VGroup):
         new_state[(i-1) % self.n] += 2
         return new_state
 
+    # animates each person to either be eating or sharing based on self.states
+    #  the animation is parametrized by t
+    #  the state used is decided by floor(t)
+    #     (so 0..1 is state #1, 1..2 is state #2, and so on)
     def anim_states(self, t, simul=False):
         if len(self.states) < 2: return
 
@@ -262,8 +286,8 @@ class FriendCircle(VGroup):
                 self.counters[i].set_value(cval(i, int_c_up))
             elif i in [fi%self.n]:
                 self.counters[i].set_value(cval(i, int_c_down))
-            #else:
-                #self.counters[i].set_value(state_to[0][i])
+            else:
+                self.counters[i].set_value(state_to[0][i])
 
 
     def get_anchor_points(self):
@@ -275,7 +299,7 @@ class FriendCircle(VGroup):
         return r
 
     def nstates(self):
-        return len(self.states) - 1
+        return len(self.states) + 1
 
     def add_state(self, state):
         self.states.append(state)
@@ -290,7 +314,7 @@ class FriendCircle(VGroup):
         return self.friends
 
 
-class Testing(Scene):
+class TestPiecewiseInterpolate(Scene):
     def construct(self):
         interp = PiecewiseInterpolate([
             {"time": 10, "start": 0, "end": 1},
@@ -312,7 +336,7 @@ class Testing(Scene):
 
         
 
-class Testing2(Scene):
+class TestFriendCircle(Scene):
     def construct(self):
         t_val = ValueTracker(0)
         self.add(t_val)

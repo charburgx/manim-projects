@@ -4,6 +4,7 @@ from manimlib import AnimationGroup as AG
 FADE_BUFF = MED_LARGE_BUFF
 YELLOW_F = "#F7F642"
 BOX_C = YELLOW_F
+SEC_C = YELLOW_F
 GRAD_A = (YELLOW_B, PINK)
 
 def src(item):
@@ -13,6 +14,9 @@ def gen_f12():
     return Tex("f12", tex_to_color_map={"12":YELLOW_F}, font_size=160)
 
 class MathCompetitions(Scene):
+    """
+    Scene describing context of AMC/math competitions
+    """
     def construct(self):
         math_comps = Text("Math Competitions")
         math_comps_ul = Underline(math_comps)
@@ -78,6 +82,9 @@ class MathCompetitions(Scene):
         )
 
 class CompFlow(Scene):
+    """
+    Scene showing progression of American math competitions
+    """
     def construct(self):
         t_conf = { "font_size":30 }
 
@@ -129,24 +136,29 @@ class CompFlow(Scene):
             FadeIn(app_label),
             AG( Write(amc), FadeIn(amc_label), lag_ratio=0.8 )
         )
-        self.wait()
+        #self.wait()
 
         self.play(arr_anim(0, aime, aime_label))
-        self.wait()
+        #self.wait()
 
         self.play(arr_anim(1, usamo, usamo_label))
-        self.wait()
+        #self.wait()
 
         self.play( 
             arr_anim(2, imo, imo_label),
             FadeIn(imo_pic, DOWN)
         )
 
+        self.wait(1)
+
         """self.play(
             AG( *(FadeIn(label) for label in labels), lag_ratio=0.1 )
         )"""
 
 class AnotherWay(Scene):
+    """
+    Scene hinting at the existence of USAMTS
+    """
     def construct(self):
         cor_buff = 2
         conf_t = { "font_size": 55, "t2c":{ "3": YELLOW, "15": YELLOW } }
@@ -205,6 +217,9 @@ class Proof(Scene):
         #self.add(content)
 
 class Intro(Scene):
+    """
+    Intro which shows f12 logo
+    """
     def construct(self):
         axes = Axes(x_range=np.array([-4.0, 4.0, 1.0]), y_range=np.array([-4.0, 4.0, 1.0]), height=6, width=6)
 
@@ -259,6 +274,9 @@ class Intro(Scene):
         #self.add(f12)
 
 class USAMTS(Scene):
+    """
+    Describe the USA Mathematical Talent Search
+    """
     def construct(self):
         aopsin = ImageMobject(src("aopsinitiative_bg.png"), height=1.75)
         aops   = ImageMobject(src("aops_logo_bg.png"), height=1)
@@ -348,6 +366,9 @@ class USAMTS(Scene):
         #self.add(aopsin, rhs, rhs_arrs, lhs_arr, usamts)
 
 class ProblemStatement(Scene):
+    """
+    Exhibit main problem statement from USAMTS 2019
+    """
     def construct(self):
         conf_f = { "font_size":23 }
 
@@ -471,9 +492,220 @@ class BeautifulMathAhead(Scene):
             ),
             lag_ratio=0.5
         ))
+
+        #self.remove(*self.mobjects)
+
+        self.wait(2)
         #self.add(body, text)
 
-class 
+bfc_args = { "friend_size":3, "radius":2.5 }
+bfc = lambda: FriendCircle(12, [2019, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], **bfc_args)
+
+class BigInitialExample(Scene):
+    def construct(self):
+        circ = bfc()
+        circ.gen_rand_state()
+        self.add(circ)
+
+        t_val = ValueTracker(0)
+        t = lambda: t_val.get_value()
+        self.add(t_val)
+
+        circ.add_updater(lambda m: m.anim_states(t()))
+
+        self.wait(0.5)
+
+        #self.play(FadeOut(circ.counters[1]))
+
+        rate = 251
+        t_val.add_updater(lambda m, dt: m.increment_value(dt*rate))
+        self.wait( (circ.nstates())/rate )
+
+        self.wait(2)
+
+        rate = 1/2
+        t_val.set_value(1000)
+        self.wait(30)
+
+        rate = 1/2
+        t_val.set_value(circ.nstates() - 12)
+        self.wait(30)
+
+        pause = Text("\uf04c", font_size=90, font="Font Awesome 5 Free")
+        self.play(Write(pause))
+        self.wait(3)
+        self.play(FadeOut(pause))
+
+        #t_val.set_value(circ.nstates())
+        self.wait(0.1)
+        self.play(circ.animate.scale(0.9, about_point=np.array((0, FRAME_Y_RADIUS, 0))))
+
+        self.wait(0.1)
+
+        lhs = Tex("11111100011_2", isolate=["0", "1"])
+        rhs = Tex("= 2019", color=SEC_C)
+        
+        eq = VGroup(lhs, rhs)
+        eq.arrange(RIGHT)
+        eq.to_edge(DOWN)
+
+        #self.embed()
+
+        self.play(AG(
+            *(FadeTransform(m.copy(), lhs[10 - i]) for i, m in enumerate(circ.counters[:11])),
+            Write(lhs[11]),
+            lag_ratio=0.05,
+            run_time=2
+        ))
+
+        self.wait(0.5)
+
+        self.play(Write(rhs, run_time=2))
+
+class BigInitialExampleExport(Scene):
+    def construct(self):
+        circ = bfc()
+        circ.gen_rand_state()
+        self.add(circ)
+
+        t_val = ValueTracker(0)
+        t = lambda: t_val.get_value()
+        self.add(t_val)
+
+        circ.add_updater(lambda m: m.anim_states(t()))
+
+        self.wait(0.5)
+
+        #self.play(FadeOut(circ.counters[1]))
+
+        self.play(t_val.animate.increment_value(5), run_time=5, rate_func=linear)
+
+        fast = Text("\uf050", font_size=100, font="Font Awesome 5 Free")
+        fast.to_corner(UR)
+
+        bez_w = 50
+        self.play(AG(t_val.animate.increment_value(circ.nstates()), run_time=10, rate_func=bezier([*np.full(bez_w, 0), *np.full(bez_w, 1)])), Write(fast))
+
+        #t_val.set_value(circ.nstates())
+        #self.wait(0.1)
+        self.play(FadeOut(fast), circ.animate.scale(0.9, about_point=np.array((0, FRAME_Y_RADIUS, 0))))
+
+        self.wait(0.1)
+
+        lhs = Tex("11111100011_2", isolate=["0", "1"])
+        rhs = Tex("= 2019", color=SEC_C)
+        
+        eq = VGroup(lhs, rhs)
+        eq.arrange(RIGHT)
+        eq.to_edge(DOWN)
+
+        #self.embed()
+
+        self.play(AG(
+            *(FadeTransform(m.copy(), lhs[10 - i]) for i, m in enumerate(circ.counters[:11])),
+            Write(lhs[11]),
+            lag_ratio=0.05,
+            run_time=2
+        ))
+
+        self.wait(0.5)
+
+        self.play(Write(rhs, run_time=2))
+
+        self.wait(2)
+
+class OtherCalcs(Scene):
+    def construct(self):
+        circ = bfc()
+        circ.gen_rand_state()
+        self.add(circ)
+
+        t_val = ValueTracker(0)
+        t = lambda: t_val.get_value()
+        self.add(t_val)
+
+        circ.add_updater(lambda m: m.anim_states(t()))
+
+        self.wait(0.5)
+
+        self.play( t_val.animate.increment_value(circ.nstates()+2), run_time=3, rate_func=smooth )
+
+        #self.wait( (circ.nstates()+2)/rate )
+
+class Why(Scene):
+    def construct(self):
+        why = Text("Why?", font_size=100)
+
+        self.play(Write(why))
+
+class Explanation(Scene):
+    def construct(self):
+        conf_f = { "font_size":60 }
+
+        binary = Tex("{{a_n \\cdots a_2 a_1 a_0}}_2", isolate=["a_0", "a_1", "a_2", "a_n"], **conf_f)
+        expansion = Tex("= 2^0 a_0 + 2^1 a_1 + 2^2 a_2 + \\ldots", isolate=["a_0", "a_1", "a_2", "=", "\\ldots"], **conf_f)
+        summation = Tex("= \sum_{{i = 0}}^n 2^i a_i", color=SEC_C, isolate=["=", "a_i"])
+
+        overline = Underline(VGroup(binary[0], binary[4]))
+        overline.next_to(binary, UP, buff=0.2)
+        overline.shift(LEFT * 0.15)
+        binary.add(overline)
+
+        summation[0].set_color(WHITE)
+
+        ex = VGroup(binary, expansion, summation)
+        ex.arrange(ORIGIN, buff=0.5, aligned_edge=LEFT)
+        shift_amt = 1
+
+        self.play(Write(binary))
+        self.wait(0.5)
+
+        self.play( binary.animate.shift(UP * shift_amt) )
+
+        self.play(
+            #Write(expansion[0]),
+            FadeTransform(binary[4].copy(), expansion[2]),
+            FadeTransform(binary[3].copy(), expansion[4]),
+            FadeTransform(binary[2].copy(), expansion[6]),
+            FadeTransform(binary[0].copy(), expansion[8]),
+            Write(VGroup(expansion[0], expansion[1], expansion[3], expansion[5], expansion[7])),
+            run_time=1.5
+        )
+        self.wait(0.5)
+
+        self.play( VGroup(binary, expansion).animate.shift(UP * (shift_amt +  0.3)) )
+
+        self.play(
+            Write(summation),
+            *(FadeTransform(expansion[i].copy(), summation[-1]) for i in [2, 4, 6])
+        )
+        self.wait(0.5)
+
+        removal = VGroup(binary, expansion, summation[0])
+        thesum = summation[1:]   
+
+        #friend circle
+        circ = bfc()
+        circ.gen_rand_state()
+        self.add(circ)
+
+        t_val = ValueTracker(0)
+        t = lambda: t_val.get_value()
+        self.add(t_val)
+
+        circ.scale(0.9, about_point=np.array((0, FRAME_Y_RADIUS, 0)))
+        circ.shift(0.5*UP)
+
+        circ.add_updater(lambda m: m.anim_states(t()))
+
+        self.play(
+            FadeOut(removal),
+            thesum.animate.to_corner(DL),
+            FadeIn(VGroup(circ.circle, *circ.friends, *circ.counters), run_time=3),
+            run_time=2
+        )
+
+        #self.add(ex)
 
 class Test(Scene):
     def construct(self):
